@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>UC_005 — Phase 2 (Chat)</title>
+  <title>UC_005 — Tactical Node Dashboard (Phase 2.1)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -10,15 +10,15 @@
 <body>
   <div class="container">
     <header class="topbar">
-      <div class="title">UC_005 — Tactical Node Dashboard</div>
+      <div class="title">UC_005 — Tactical Node Dashboard (Chat + Discovery)</div>
       <div class="profile-mini">Profile</div>
     </header>
 
     <main class="layout">
-      <!-- Left: Profile & Active Nodes -->
+      <!-- Left Panel -->
       <aside class="left card">
         <div class="profile">
-          <div class="avatar"> <div class="initials">U</div> </div>
+          <div class="avatar"><div class="initials">U</div></div>
           <div>
             <div id="profileName" class="profile-name">Unit_Node</div>
             <div id="profileIp" class="muted">IP: —</div>
@@ -32,16 +32,7 @@
           <button id="btnSettings">Settings</button>
         </div>
 
-        <div class="search">
-          <input id="searchNodes" placeholder="Search nodes..." />
-        </div>
-
-        <div class="panel-title">Active Nodes</div>
-        <div id="nodesList" class="nodes-list">
-          <div class="muted">Scanning for nodes...</div>
-        </div>
-
-        <div class="panel-title" style="margin-top:12px">Node Control</div>
+        <div class="panel-title">Node Control</div>
         <label>Name</label>
         <input id="nodeName" placeholder="Unit_Node" />
         <label>Port</label>
@@ -52,6 +43,11 @@
           <button id="updateBtn" disabled>Update</button>
         </div>
         <div id="nodeSummary" class="muted" style="margin-top:10px">Not running</div>
+
+        <div class="panel-title" style="margin-top:12px">Active Nodes</div>
+        <div id="nodesList" class="nodes-list">
+          <div class="muted">Scanning for nodes...</div>
+        </div>
       </aside>
 
       <!-- Center: Map -->
@@ -60,7 +56,7 @@
         <div id="map" class="map"></div>
       </section>
 
-      <!-- Right: Communications (collapsible) -->
+      <!-- Chat Panel -->
       <aside id="chatPanel" class="right card collapsed">
         <button id="toggleChat" class="toggle">≡</button>
         <div class="panel-title">Communications — Chat</div>
