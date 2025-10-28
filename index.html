@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>UC_005 — Phase 2 (Chat)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="title">UC_005 — Tactical Node Dashboard</div>
+      <div class="profile-mini">Profile</div>
+    </header>
+
+    <main class="layout">
+      <!-- Left: Profile & Active Nodes -->
+      <aside class="left card">
+        <div class="profile">
+          <div class="avatar"> <div class="initials">U</div> </div>
+          <div>
+            <div id="profileName" class="profile-name">Unit_Node</div>
+            <div id="profileIp" class="muted">IP: —</div>
+          </div>
+        </div>
+
+        <div class="left-actions">
+          <button id="btnChat">Chat</button>
+          <button id="btnCall" disabled>Call</button>
+          <button id="btnVideo" disabled>Video</button>
+          <button id="btnSettings">Settings</button>
+        </div>
+
+        <div class="search">
+          <input id="searchNodes" placeholder="Search nodes..." />
+        </div>
+
+        <div class="panel-title">Active Nodes</div>
+        <div id="nodesList" class="nodes-list">
+          <div class="muted">Scanning for nodes...</div>
+        </div>
+
+        <div class="panel-title" style="margin-top:12px">Node Control</div>
+        <label>Name</label>
+        <input id="nodeName" placeholder="Unit_Node" />
+        <label>Port</label>
+        <input id="localPort" placeholder="5001" value="5001" />
+        <div class="controls">
+          <button id="startBtn" disabled>Start</button>
+          <button id="stopBtn" disabled>Stop</button>
+          <button id="updateBtn" disabled>Update</button>
+        </div>
+        <div id="nodeSummary" class="muted" style="margin-top:10px">Not running</div>
+      </aside>
+
+      <!-- Center: Map -->
+      <section class="center card">
+        <div class="panel-title">Tactical Map</div>
+        <div id="map" class="map"></div>
+      </section>
+
+      <!-- Right: Communications (collapsible) -->
+      <aside id="chatPanel" class="right card collapsed">
+        <button id="toggleChat" class="toggle">≡</button>
+        <div class="panel-title">Communications — Chat</div>
+
+        <label>Select Node</label>
+        <select id="peerSelect"><option value="">— select —</option></select>
+
+        <div id="chatHistory" class="chat-history">
+          <div class="muted">Select a node to start chatting</div>
+        </div>
+
+        <div class="chat-input">
+          <input id="chatMessage" placeholder="Type a message..." />
+          <button id="sendBtn" disabled>Send</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <div id="syslog" class="syslog muted">Logs will appear here</div>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="renderer.js"></script>
+</body>
+</html>
