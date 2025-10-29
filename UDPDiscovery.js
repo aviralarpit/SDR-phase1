@@ -1,102 +1,108 @@
-// network/UDPDiscovery.js
+// UDPDiscovery.js — Debug Mode (compatible with your main.js)
 const dgram = require("dgram");
 const os = require("os");
 
-function getLocalIp() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      if (net.family === "IPv4" && !net.internal) return net.address;
-    }
-  }
-  return "127.0.0.1";
-}
-
 class UDPDiscovery {
-  constructor(updateCallback) {
+  constructor(listenPort, localName, nodeUpdateCallback, localIp) {
+    this.listenPort = listenPort || 41234;
+    this.localName = localName || "UnknownNode";
+    this.localIp = localIp || this.getLocalIp();
+    this.nodeUpdateCallback = nodeUpdateCallback;
     this.socket = dgram.createSocket("udp4");
-    this.localIp = getLocalIp();
-    this.listenPort = 41234;
-    this.nodes = new Map();
-    this.updateCallback = updateCallback;
     this.discoveryInterval = null;
-    this.localInfo = null; // <— store here to reuse safely
+    this.nodes = new Map();
+    this.selfInfo = {
+      name: this.localName,
+      ip: this.localIp,
+      port: this.listenPort,
+      status: "Active",
+    };
+
+    console.log(`[DEBUG][UDP] Module loaded for ${this.selfInfo.name} (${this.localIp})`);
 
     this.socket.on("message", (msg, rinfo) => {
       try {
+        console.log(`[DEBUG][UDP] ⬅ Received from ${rinfo.address}:${rinfo.port} → ${msg}`);
         const data = JSON.parse(msg);
         if (data.type === "HELLO" && rinfo.address !== this.localIp) {
-          this.nodes.set(rinfo.address, {
+          const node = {
             ip: rinfo.address,
             port: data.port,
             name: data.name || `Node-${rinfo.address}`,
             status: data.status || "Active",
             lastSeen: Date.now(),
-          });
-          this.updateCallback([...this.nodes.values()]);
+          };
+          this.nodes.set(rinfo.address, node);
+          console.log(`[DEBUG][UDP] ✅ Discovered node: ${node.name} (${node.ip}:${node.port})`);
+          if (this.nodeUpdateCallback) this.nodeUpdateCallback(node);
         }
       } catch (e) {
-        console.warn("Bad UDP message:", e.message);
+        console.warn(`[DEBUG][UDP] ⚠️ Invalid UDP packet: ${e.message}`);
       }
     });
 
-    this.socket.bind(this.listenPort, () =>
-      console.log(`[UDP] Listening on ${this.localIp}:${this.listenPort}`)
-    );
+    this.socket.on("error", (err) => {
+      console.error(`[DEBUG][UDP] ❌ Socket error: ${err.message}`);
+    });
+
+    this.socket.bind(this.listenPort, () => {
+      console.log(`[DEBUG][UDP] 🛰 Listening on ${this.localIp}:${this.listenPort}`);
+    });
   }
 
-  start(localInfo) {
-    if (!localInfo || !localInfo.name || !localInfo.port) {
-      console.warn("[UDP] ⚠️ Missing localInfo — cannot start discovery");
-      return;
+  getLocalIp() {
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === "IPv4" && !net.internal) return net.address;
+      }
     }
+    return "127.0.0.1";
+  }
 
-    this.localInfo = localInfo;
-    console.log(`[UDP] Discovery started as ${localInfo.name} (${this.localIp})`);
-
-    // Send initial ping immediately
-    this.pingSubnet();
-
-    // Repeat every 5s
-    this.discoveryInterval = setInterval(() => {
-      this.pingSubnet();
-    }, 5000);
+  start() {
+    console.log(`[DEBUG][UDP] 🚀 Discovery started as ${this.localName}`);
+    this.pingSubnet(); // initial send
+    this.discoveryInterval = setInterval(() => this.pingSubnet(), 5000);
   }
 
   stop() {
     clearInterval(this.discoveryInterval);
-    try {
-      this.socket.close();
-    } catch (_) {}
-    console.log("[UDP] Discovery stopped");
+    try { this.socket.close(); } catch (_) {}
+    console.log(`[DEBUG][UDP] 🛑 Discovery stopped`);
   }
 
-  // 🧠 Instead of broadcast, ping each IP in same subnet
-  pingSubnet() {
-    if (!this.localInfo) return; // <— avoids undefined 'name' error
+  updateSelf(info) {
+    this.selfInfo = { ...this.selfInfo, ...info };
+    console.log(`[DEBUG][UDP] 🧩 Updated self info:`, this.selfInfo);
+  }
 
-    const { name, port, status } = this.localInfo;
+  pingSubnet() {
+    const { name, port, status } = this.selfInfo;
     const base = this.localIp.split(".").slice(0, 3).join(".");
+    const msg = Buffer.from(JSON.stringify({
+      type: "HELLO",
+      name,
+      port,
+      status,
+    }));
+
+    console.log(`[DEBUG][UDP] 📡 Broadcasting HELLO from ${this.localIp} to subnet ${base}.x`);
+    let sentCount = 0;
 
     for (let i = 1; i < 255; i++) {
       const target = `${base}.${i}`;
       if (target === this.localIp) continue;
-
-      const msg = Buffer.from(
-        JSON.stringify({
-          type: "HELLO",
-          name,
-          port,
-          status: status || "Active",
-        })
-      );
-
       this.socket.send(msg, 0, msg.length, this.listenPort, target, (err) => {
         if (err && !err.message.includes("EHOSTUNREACH")) {
-          console.warn(`[UDP] Send error to ${target}: ${err.message}`);
+          console.warn(`[DEBUG][UDP] ❌ Send error to ${target}: ${err.message}`);
+        } else {
+          sentCount++;
         }
       });
     }
+
+    console.log(`[DEBUG][UDP] 📨 Sent ${sentCount} packets`);
   }
 }
 
