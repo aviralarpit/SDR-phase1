@@ -164,7 +164,7 @@
       peerSelect.appendChild(opt);
     });
   }
-
+  
   // incoming messages from main (TCP server parsed)
   api.onIncomingMessage((msg) => {
     // msg expected: { type, sender, text, timestamp, ... } or raw
